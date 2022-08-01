@@ -924,12 +924,9 @@ jobs:
   # https://github.com/dogtagpki/pki/wiki/Publishing-CA-Certificate-to-LDAP-Server
   ca-ldap-test:
     name: Testing LDAP-based CA cert publishing
-    needs: [init, build]
     runs-on: ubuntu-latest
     env:
       SHARED: /tmp/workdir/pki
-    strategy:
-      matrix: ${{ fromJSON(needs.init.outputs.matrix) }}
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
@@ -937,11 +934,11 @@ jobs:
       - name: Retrieve runner image
         uses: actions/cache@v3
         with:
-          key: pki-ca-runner-${{ matrix.os }}-${{ github.run_id }}
-          path: pki-ca-runner.tar
+          key: pki-runner
+          path: pki-runner.tar
 
       - name: Load runner image
-        run: docker load --input pki-ca-runner.tar
+        run: docker load --input pki-runner.tar
 
       - name: Create network
         run: docker network create example
@@ -950,8 +947,8 @@ jobs:
         run: |
           tests/bin/ds-container-create.sh ds
         env:
-          IMAGE: ${{ needs.init.outputs.db-image }}
-          COPR_REPO: ${{ needs.init.outputs.repo }}
+          IMAGE: ${{ inputs.db-image}}
+          REPO: ${{ inputs.repo}}
           HOSTNAME: ds.example.com
           PASSWORD: Secret.123
 
@@ -1064,7 +1061,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: ca-ldap-${{ matrix.os }}
+          name: ca-ldap
           path: |
             /tmp/artifacts/pki
 
